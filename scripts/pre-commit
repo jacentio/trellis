@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+#
+# Pre-commit hook for Trellis
+# Runs quick CI checks before allowing commit
+#
+
+set -euo pipefail
+
+# Get the repo root
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+
+echo "Running pre-commit checks..."
+echo ""
+
+# Run CI in quick mode (no race detector for speed)
+if ! "$REPO_ROOT/scripts/ci.sh" --quick; then
+    echo ""
+    echo "Pre-commit checks failed. Please fix the issues above before committing."
+    echo "To bypass this hook (not recommended), use: git commit --no-verify"
+    exit 1
+fi
+
+echo ""
+echo "Pre-commit checks passed!"

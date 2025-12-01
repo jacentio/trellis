@@ -1,0 +1,50 @@
+run:
+  timeout: 5m
+  tests: true
+  build-tags:
+    - e2e
+
+linters:
+  enable:
+    - errcheck
+    - gosimple
+    - govet
+    - ineffassign
+    - staticcheck
+    - unused
+    - gofmt
+    - goimports
+    - misspell
+    - unconvert
+    - unparam
+    - gocritic
+
+linters-settings:
+  errcheck:
+    check-type-assertions: true
+    check-blank: true
+  govet:
+    enable-all: true
+    disable:
+      - fieldalignment
+  gofmt:
+    simplify: true
+  misspell:
+    locale: US
+  gocritic:
+    enabled-tags:
+      - diagnostic
+      - style
+      - performance
+
+issues:
+  exclude-rules:
+    # Ignore long lines in tests
+    - path: _test\.go
+      linters:
+        - lll
+    # Ignore error return in tests for setup/cleanup
+    - path: _test\.go
+      text: "Error return value is not checked"
+      linters:
+        - errcheck
