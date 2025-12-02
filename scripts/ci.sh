@@ -63,46 +63,7 @@ GO_VERSION=$(go version | awk '{print $3}')
 echo "  Go version: $GO_VERSION"
 echo ""
 
-# 2. Check formatting
-info "Checking code formatting (gofmt)..."
-UNFORMATTED=$(gofmt -l . 2>&1 | grep -v vendor || true)
-if [ -n "$UNFORMATTED" ]; then
-    error "The following files are not formatted:"
-    echo "$UNFORMATTED"
-    echo ""
-    echo "Run: gofmt -w ."
-    FAILED=1
-else
-    echo "  All files formatted correctly"
-fi
-echo ""
-
-# 3. Run go vet
-info "Running go vet..."
-if ! go vet ./... 2>&1; then
-    error "go vet found issues"
-    FAILED=1
-else
-    echo "  No issues found"
-fi
-echo ""
-
-# 4. Run staticcheck (if available)
-if command -v staticcheck &> /dev/null; then
-    info "Running staticcheck..."
-    if ! staticcheck ./... 2>&1; then
-        error "staticcheck found issues"
-        FAILED=1
-    else
-        echo "  No issues found"
-    fi
-    echo ""
-else
-    warn "staticcheck not installed, skipping (install: go install honnef.co/go/tools/cmd/staticcheck@latest)"
-    echo ""
-fi
-
-# 5. Check go.mod is tidy
+# 2. Check go.mod is tidy
 info "Checking go.mod is tidy..."
 go mod tidy
 if ! git diff --quiet go.mod go.sum 2>/dev/null; then
@@ -114,7 +75,7 @@ else
 fi
 echo ""
 
-# 6. Build
+# 3. Build
 info "Building..."
 if ! go build ./... 2>&1; then
     error "Build failed"
@@ -124,7 +85,47 @@ else
 fi
 echo ""
 
-# 7. Run tests
+# 4. Run golangci-lint (includes gofmt, govet, staticcheck, and more)
+if command -v golangci-lint &> /dev/null; then
+    info "Running golangci-lint..."
+    if ! golangci-lint run --timeout=5m 2>&1; then
+        error "golangci-lint found issues"
+        FAILED=1
+    else
+        echo "  No issues found"
+    fi
+    echo ""
+else
+    warn "golangci-lint not installed, falling back to basic checks"
+    warn "Install: go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest"
+    echo ""
+
+    # Fallback: basic formatting check
+    info "Checking code formatting (gofmt)..."
+    UNFORMATTED=$(gofmt -l . 2>&1 | grep -v vendor || true)
+    if [ -n "$UNFORMATTED" ]; then
+        error "The following files are not formatted:"
+        echo "$UNFORMATTED"
+        echo ""
+        echo "Run: gofmt -w ."
+        FAILED=1
+    else
+        echo "  All files formatted correctly"
+    fi
+    echo ""
+
+    # Fallback: go vet
+    info "Running go vet..."
+    if ! go vet ./... 2>&1; then
+        error "go vet found issues"
+        FAILED=1
+    else
+        echo "  No issues found"
+    fi
+    echo ""
+fi
+
+# 5. Run tests
 if [ "$QUICK_MODE" = true ]; then
     info "Running tests (quick mode, no race detector)..."
     if ! go test ./... 2>&1; then
@@ -144,7 +145,7 @@ else
 fi
 echo ""
 
-# 8. Check for build tags (E2E tests compile)
+# 6. Check for build tags (E2E tests compile)
 info "Verifying E2E tests compile..."
 if ! go build -tags=e2e ./e2e/... 2>&1; then
     error "E2E tests failed to compile"

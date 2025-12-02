@@ -51,25 +51,3 @@ func TTLFilterValues() map[string]types.AttributeValue {
 func ParentExistsCondition() string {
 	return "attribute_exists(id) AND (attribute_not_exists(#ttl) OR #ttl > :now)"
 }
-
-// mergeExprNames merges multiple expression attribute name maps.
-func mergeExprNames(maps ...map[string]string) map[string]string {
-	result := make(map[string]string)
-	for _, m := range maps {
-		for k, v := range m {
-			result[k] = v
-		}
-	}
-	return result
-}
-
-// mergeExprValues merges multiple expression attribute value maps.
-func mergeExprValues(maps ...map[string]types.AttributeValue) map[string]types.AttributeValue {
-	result := make(map[string]types.AttributeValue)
-	for _, m := range maps {
-		for k, v := range m {
-			result[k] = v
-		}
-	}
-	return result
-}

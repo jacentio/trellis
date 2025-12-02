@@ -155,9 +155,7 @@ func TestMain(m *testing.M) {
 	code := m.Run()
 
 	// Cleanup tables
-	if err := deleteTables(ctx); err != nil {
-		fmt.Printf("Failed to delete tables: %v\n", err)
-	}
+	deleteTables(ctx)
 
 	os.Exit(code)
 }
@@ -232,7 +230,7 @@ func createTables(ctx context.Context) error {
 	return nil
 }
 
-func deleteTables(ctx context.Context) error {
+func deleteTables(ctx context.Context) {
 	fmt.Println("Deleting test tables...")
 
 	tables := []string{organizationsTable, studiosTable, titlesTable, relationshipTable, uniqueTable}
@@ -246,7 +244,6 @@ func deleteTables(ctx context.Context) error {
 	}
 
 	fmt.Println("Tables deleted")
-	return nil
 }
 
 // --- CRUD Tests ---

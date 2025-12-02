@@ -33,10 +33,10 @@ func NewHandler(s *store.Store, logger *slog.Logger) *Handler {
 // HandleCascadeDelete processes DynamoDB stream events to propagate TTL to children.
 // This function is designed to be used as an AWS Lambda handler.
 func (h *Handler) HandleCascadeDelete(ctx context.Context, event events.DynamoDBEvent) error {
-	for _, record := range event.Records {
-		if err := h.processRecord(ctx, record); err != nil {
+	for i := range event.Records {
+		if err := h.processRecord(ctx, &event.Records[i]); err != nil {
 			h.logger.Error("failed to process record",
-				"eventID", record.EventID,
+				"eventID", event.Records[i].EventID,
 				"error", err,
 			)
 			return err // Will retry, eventually DLQ
@@ -46,7 +46,7 @@ func (h *Handler) HandleCascadeDelete(ctx context.Context, event events.DynamoDB
 }
 
 // processRecord processes a single DynamoDB stream record.
-func (h *Handler) processRecord(ctx context.Context, record events.DynamoDBEventRecord) error {
+func (h *Handler) processRecord(ctx context.Context, record *events.DynamoDBEventRecord) error {
 	// Only process MODIFY events where TTL was added
 	if record.EventName != "MODIFY" {
 		return nil
@@ -135,8 +135,10 @@ func getStringAttr(image map[string]events.DynamoDBAttributeValue, key string) s
 func getNumberAttr(image map[string]events.DynamoDBAttributeValue, key string) int64 {
 	if v, ok := image[key]; ok {
 		if v.DataType() == events.DataTypeNumber {
-			n, _ := strconv.ParseInt(v.Number(), 10, 64)
-			return n
+			n, err := strconv.ParseInt(v.Number(), 10, 64)
+			if err == nil {
+				return n
+			}
 		}
 	}
 	return 0

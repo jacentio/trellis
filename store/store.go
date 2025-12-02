@@ -66,7 +66,7 @@ func (s *Store) Create(ctx context.Context, entity Entity, item map[string]types
 
 	// Track item indices for error mapping
 	parentCheckIndex := -1
-	entityPutIndex := -1
+	var entityPutIndex int
 
 	// 1. Add parent condition check if entity has a parent
 	if checker, ok := entity.(ParentChecker); ok {
@@ -138,7 +138,10 @@ func (s *Store) Create(ctx context.Context, entity Entity, item map[string]types
 
 	// Store unique PKs on entity for cascade delete cleanup
 	if len(uniquePKs) > 0 {
-		uniquePKsAttr, _ := attributevalue.MarshalList(uniquePKs)
+		uniquePKsAttr, err := attributevalue.MarshalList(uniquePKs)
+		if err != nil {
+			return fmt.Errorf("marshal unique PKs: %w", err)
+		}
 		item["_unique_pks"] = &types.AttributeValueMemberL{Value: uniquePKsAttr}
 	}
 
@@ -206,7 +209,7 @@ func (s *Store) Get(ctx context.Context, table string, key PK) (*Item, error) {
 }
 
 // Query queries entities with automatic TTL filtering.
-func (s *Store) Query(ctx context.Context, input QueryInput) ([]*Item, error) {
+func (s *Store) Query(ctx context.Context, input *QueryInput) ([]*Item, error) {
 	// Merge TTL filter with any existing filter
 	filterExpr := TTLFilterExpr()
 	if input.FilterExpression != "" {
@@ -454,7 +457,10 @@ func (s *Store) updateWithUniqueConstraints(ctx context.Context, entity Entity, 
 	setClauses = append(setClauses, "#updated_at = :updated_at", "#version = #version + :one")
 
 	// Update _unique_pks with new PKs
-	uniquePKsAttr, _ := attributevalue.MarshalList(newUniquePKs)
+	uniquePKsAttr, err := attributevalue.MarshalList(newUniquePKs)
+	if err != nil {
+		return fmt.Errorf("marshal unique PKs: %w", err)
+	}
 	exprValues[":unique_pks"] = &types.AttributeValueMemberL{Value: uniquePKsAttr}
 	setClauses = append(setClauses, "#unique_pks = :unique_pks")
 
@@ -866,7 +872,10 @@ func (s *Store) unmarshalItem(raw map[string]types.AttributeValue) *Item {
 	item := &Item{Raw: raw}
 
 	if v, ok := raw["version"].(*types.AttributeValueMemberN); ok {
-		item.Version, _ = strconv.ParseInt(v.Value, 10, 64)
+		parsed, err := strconv.ParseInt(v.Value, 10, 64)
+		if err == nil {
+			item.Version = parsed
+		}
 	}
 	if v, ok := raw["created_at"].(*types.AttributeValueMemberS); ok {
 		item.CreatedAt = v.Value

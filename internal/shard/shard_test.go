@@ -97,7 +97,7 @@ func TestRelationshipPK_HexFormat(t *testing.T) {
 
 	// Verify it's valid hex
 	for _, c := range shard {
-		if !((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f')) {
+		if (c < '0' || c > '9') && (c < 'a' || c > 'f') {
 			t.Errorf("expected hex character, got %c", c)
 		}
 	}
@@ -126,7 +126,7 @@ func TestUniqueConstraintPK(t *testing.T) {
 
 		// Should be valid hex
 		for _, c := range result {
-			if !((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f')) {
+			if (c < '0' || c > '9') && (c < 'a' || c > 'f') {
 				t.Errorf("expected hex character, got %c in %q", c, result)
 			}
 		}
@@ -356,7 +356,7 @@ func TestUniqueConstraintPK_Unicode(t *testing.T) {
 
 	// Verify valid hex
 	for _, c := range result {
-		if !((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f')) {
+		if (c < '0' || c > '9') && (c < 'a' || c > 'f') {
 			t.Errorf("expected hex character, got %c in %q", c, result)
 		}
 	}

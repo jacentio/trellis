@@ -1,3 +1,5 @@
+version: "2"
+
 run:
   timeout: 5m
   tests: true
@@ -7,17 +9,19 @@ run:
 linters:
   enable:
     - errcheck
-    - gosimple
     - govet
     - ineffassign
     - staticcheck
     - unused
-    - gofmt
-    - goimports
     - misspell
     - unconvert
     - unparam
     - gocritic
+
+formatters:
+  enable:
+    - gofmt
+    - goimports
 
 linters-settings:
   errcheck:
@@ -27,8 +31,6 @@ linters-settings:
     enable-all: true
     disable:
       - fieldalignment
-  gofmt:
-    simplify: true
   misspell:
     locale: US
   gocritic:
@@ -36,6 +38,10 @@ linters-settings:
       - diagnostic
       - style
       - performance
+
+formatters-settings:
+  gofmt:
+    simplify: true
 
 issues:
   exclude-rules:
