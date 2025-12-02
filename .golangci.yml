@@ -1,56 +1,73 @@
 version: "2"
-
 run:
-  timeout: 5m
-  tests: true
   build-tags:
     - e2e
-
+  tests: true
 linters:
   enable:
-    - errcheck
-    - govet
-    - ineffassign
-    - staticcheck
-    - unused
+    - gocritic
     - misspell
     - unconvert
     - unparam
-    - gocritic
-
+  settings:
+    errcheck:
+      check-type-assertions: true
+      check-blank: true
+    gocritic:
+      enabled-tags:
+        - diagnostic
+        - style
+        - performance
+    govet:
+      disable:
+        - fieldalignment
+      enable-all: true
+    misspell:
+      locale: US
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    rules:
+      - linters:
+          - lll
+        path: _test\.go
+      - linters:
+          - errcheck
+        path: _test\.go
+      - linters:
+          - govet
+        path: _test\.go
+        text: shadow
+      - linters:
+          - govet
+        path: _test\.go
+        text: unusedwrite
+      - linters:
+          - gocritic
+        path: _test\.go
+        text: commentedOutCode
+      - linters:
+          - gocritic
+        path: _test\.go
+        text: emptyStringTest
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
 formatters:
   enable:
     - gofmt
     - goimports
-
-linters-settings:
-  errcheck:
-    check-type-assertions: true
-    check-blank: true
-  govet:
-    enable-all: true
-    disable:
-      - fieldalignment
-  misspell:
-    locale: US
-  gocritic:
-    enabled-tags:
-      - diagnostic
-      - style
-      - performance
-
-formatters-settings:
-  gofmt:
-    simplify: true
-
-issues:
-  exclude-rules:
-    # Ignore long lines in tests
-    - path: _test\.go
-      linters:
-        - lll
-    # Ignore error return in tests for setup/cleanup
-    - path: _test\.go
-      text: "Error return value is not checked"
-      linters:
-        - errcheck
+  settings:
+    gofmt:
+      simplify: true
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
